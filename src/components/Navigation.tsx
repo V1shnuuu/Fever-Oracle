@@ -1,23 +1,33 @@
 import { Link, useLocation } from "react-router-dom";
-import { Activity, TrendingUp, Bell, LogOut, LayoutDashboard } from "lucide-react";
+import { Activity, TrendingUp, Bell, LogOut, LayoutDashboard, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const location = useLocation();
 
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/patient-risk", label: "Patient Risk", icon: TrendingUp },
-    { path: "/alerts", label: "Alerts", icon: Bell }
+    { path: "/alerts", label: "Alerts", icon: Bell },
+    { path: "/map", label: "Live Map", icon: MapPinned }
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <nav className="border-b bg-card shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4 sm:gap-8">
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/dashboard" className="flex items-center gap-2">
               <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <span className="font-bold text-lg sm:text-xl text-foreground">FEVER ORACLE</span>
             </Link>
@@ -65,7 +75,7 @@ const Navigation = () => {
                 );
               })}
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Logout</span>
             </Button>
