@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Activity, TrendingUp, Bell, LogOut, LayoutDashboard, MapPinned } from "lucide-react";
+import { Activity, TrendingUp, Bell, LogOut, LayoutDashboard, MapPinned, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "../contexts/AuthContext";
@@ -14,7 +14,8 @@ const Navigation = () => {
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/patient-risk", label: "Patient Risk", icon: TrendingUp },
     { path: "/alerts", label: "Alerts", icon: Bell },
-    { path: "/map", label: "Live Map", icon: MapPinned }
+    { path: "/map", label: "Live Map", icon: MapPinned },
+    { path: "/kafka", label: "Live Data Export", icon: Database }
   ];
 
   const handleLogout = () => {

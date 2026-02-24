@@ -1,22 +1,38 @@
-import { Bell, Shield, Activity, Building2, BarChart3, TrendingUp, AlertTriangle, Users } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Bell, Shield, Activity, Building2, BarChart3, TrendingUp, AlertTriangle, Users, Boxes, Search, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Cell, PieChart, Pie } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Cell, PieChart, Pie, Legend } from "recharts";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { alertData, regionalOutbreakData, AlertData } from "@/lib/mockData";
 
 const Alerts = () => {
-  const crossInstitutionalAlerts = alertData.filter(a => a.source === "Federated Learning") as Array<AlertData & { institutions: string[]; pattern: string }>;
-  const localAlerts = alertData.filter(a => a.source !== "Federated Learning");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [severityFilter, setSeverityFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+
+  const filteredAlerts = useMemo(() => {
+    return alertData.filter(alert => {
+      const matchesSearch = alert.message.toLowerCase().includes(searchQuery.toLowerCase()) || alert.id.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSeverity = severityFilter === "all" || alert.severity === severityFilter;
+      const matchesSource = sourceFilter === "all" || alert.source === sourceFilter;
+      return matchesSearch && matchesSeverity && matchesSource;
+    });
+  }, [searchQuery, severityFilter, sourceFilter]);
+
+  const crossInstitutionalAlerts = filteredAlerts.filter(a => a.source === "Federated Learning") as Array<AlertData & { institutions: string[]; pattern: string }>;
+  const localAlerts = filteredAlerts.filter(a => a.source !== "Federated Learning");
 
   // Alert statistics
   const alertStats = {
-    total: alertData.length,
-    high: alertData.filter(a => a.severity === "high").length,
-    medium: alertData.filter(a => a.severity === "medium").length,
-    low: alertData.filter(a => a.severity === "low").length,
-    totalAffected: alertData.reduce((sum, a) => sum + a.affectedPopulation, 0),
+    total: filteredAlerts.length,
+    high: filteredAlerts.filter(a => a.severity === "high").length,
+    medium: filteredAlerts.filter(a => a.severity === "medium").length,
+    low: filteredAlerts.filter(a => a.severity === "low").length,
+    totalAffected: filteredAlerts.reduce((sum, a) => sum + a.affectedPopulation, 0),
   };
 
   // Alert trends over time (last 7 days)
@@ -46,11 +62,59 @@ const Alerts = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Alert System</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Cross-institutional federated learning and early warning system</p>
           </div>
-          <Badge variant="outline" className="text-xs sm:text-sm flex items-center gap-2">
-            <Shield className="h-3 w-3" />
-            Privacy Protected
+          <Badge variant="outline" className="text-xs sm:text-sm flex items-center gap-2 border-primary text-primary bg-primary/10">
+            <Boxes className="h-3 w-3" />
+            Blockchain Secured
           </Badge>
         </div>
+
+        {/* Filters */}
+        <Card className="shadow-card">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-[2]">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search alerts..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2 flex-1">
+                <Filter className="h-4 w-4 text-muted-foreground mr-2 hidden sm:block" />
+                <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Severity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Severities</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1">
+                <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Sources" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sources</SelectItem>
+                    <SelectItem value="Federated Learning">Federated Learning</SelectItem>
+                    <SelectItem value="Wastewater Analysis">Wastewater Analysis</SelectItem>
+                    <SelectItem value="Pharmacy Data">Pharmacy Data</SelectItem>
+                    <SelectItem value="Climate Monitoring">Climate Monitoring</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="mt-4 text-sm text-muted-foreground">
+              Showing {filteredAlerts.length} of {alertData.length} alerts
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Alert Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -240,13 +304,18 @@ const Alerts = () => {
                         cx="50%"
                         cy="50%"
                         outerRadius={60}
-                        label={(entry) => `${entry.name}: ${entry.value}`}
                       >
                         {sourceDistribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <ChartTooltip content={<ChartTooltipContent />} />
+                      <Legend
+                        layout="vertical"
+                        verticalAlign="middle"
+                        align="right"
+                        wrapperStyle={{ fontSize: '12px' }}
+                      />
                     </PieChart>
                   </ChartContainer>
                 </CardContent>
@@ -256,15 +325,15 @@ const Alerts = () => {
             <Card className="shadow-card border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-primary mt-0.5" />
+                  <Boxes className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <h4 className="text-sm font-semibold text-foreground mb-1">
-                      Privacy-Preserving Federated Learning
+                      Blockchain-Secured Federated Learning
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      All cross-institutional alerts are generated using federated learning with differential
-                      privacy techniques. No patient data is centralized or shared between institutions.
-                      HIPAA/GDPR compliant with encrypted communications and audit logging.
+                      All cross-institutional alerts are generated using federated learning secured by blockchain technology.
+                      Immutable audit trails ensure data integrity and transparency, while smart contracts govern data sharing between institutions.
+                      HIPAA/GDPR compliant with cryptographic verification.
                     </p>
                   </div>
                 </div>
@@ -293,7 +362,7 @@ const Alerts = () => {
                           <Badge
                             variant={
                               alert.severity === 'high' ? 'destructive' :
-                              alert.severity === 'medium' ? 'default' : 'outline'
+                                alert.severity === 'medium' ? 'default' : 'outline'
                             }
                             className="text-xs"
                           >
